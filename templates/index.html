@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zomato - Order Food Online</title>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- 1. TOP NAVBAR -->
+    <header class="navbar">
+        <div class="nav-left">
+            <a href="/" class="logo">zomato</a>
+            <div class="location-badge">
+                📍 <span>Connaught Place, New Delhi</span>
+            </div>
+        </div>
+
+        <div class="nav-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search for restaurant, cuisine or a dish...">
+        </div>
+
+        <div class="nav-actions">
+            <!-- My Orders Button -->
+            <a href="/orders" class="btn btn-outline">
+                📦 My Orders
+            </a>
+            <!-- Cart Button -->
+            <button class="btn btn-primary" id="cartNavBtn" onclick="openCartModal()">
+                🛒 Cart <span class="cart-badge" id="cartBadge">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. HERO BANNER -->
+    <section class="hero-banner">
+        <h1>Discover the Best Food & Drinks</h1>
+        <p>Order delicious dishes from top-rated restaurants around you with lightning-fast delivery.</p>
+    </section>
+
+    <!-- 3. MAIN CONTENT CONTAINER -->
+    <main class="container">
+        
+        <!-- Category Filter Chips -->
+        <div class="filter-bar">
+            <button class="filter-chip active" data-category="all">🍽️ All Restaurants</button>
+            <button class="filter-chip" data-category="veg">🌱 Pure Veg</button>
+            <button class="filter-chip" data-category="North Indian">🍛 North Indian</button>
+            <button class="filter-chip" data-category="Biryani">🍚 Royal Biryani</button>
+            <button class="filter-chip" data-category="Pizza">🍕 Pizzas</button>
+            <button class="filter-chip" data-category="Burgers">🍔 Burgers</button>
+            <button class="filter-chip" data-category="Dessert">🍰 Desserts & Waffles</button>
+            <button class="filter-chip" data-category="South Indian">☕ South Indian</button>
+            <button class="filter-chip" data-category="rating">⭐ Rating 4.4+</button>
+        </div>
+
+        <!-- Section Title & Sort Option -->
+        <div class="section-title">
+            <h2>Best Restaurants in Delhi NCR</h2>
+            <div>
+                <select id="sortSelect" onchange="applySorting(this.value)" style="padding:6px 12px; border-radius:6px; border:1px solid #CCC; font-size:13px; outline:none; background:#FFF;">
+                    <option value="rating">Sort by: Rating (High to Low)</option>
+                    <option value="price_for_two">Sort by: Cost (Low to High)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Restaurants Grid -->
+        <div class="restaurant-grid" id="restaurantGrid">
+            <!-- Dynamically populated by app.js via Pandas DataFrame API -->
+        </div>
+
+    </main>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 1: RESTAURANT MENU MODAL -->
+    <!-- ============================================================= -->
+    <div class="modal-overlay" id="menuModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 id="menuRestaurantName" style="font-size:20px; font-weight:800; color:#1C1C1C;">Restaurant Name</h3>
+                    <p id="menuRestaurantCuisine" style="font-size:13px; color:#777; margin-top:2px;">Cuisines</p>
+                    <span id="menuRestaurantRating" class="rating-badge" style="margin-top:6px;">4.5 ★</span>
+                </div>
+                <button class="close-btn" onclick="closeMenuModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="menuItemsList">
+                <!-- Dynamically populated menu rows -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 2: SHOPPING CART & CHECKOUT MODAL -->
+    <!-- ============================================================= -->
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 style="font-size:18px; font-weight:700;">Your Cart</h3>
+                <button class="close-btn" onclick="closeCartModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                
+                <div id="cartEmptyMsg" style="text-align:center; padding:30px; color:#888;">
+                    <div style="font-size:40px; margin-bottom:10px;">🛒</div>
+                    <p style="font-size:16px; font-weight:600;">Your cart is empty</p>
+                    <p style="font-size:13px;">Add dishes from any restaurant to order delicious food!</p>
+                </div>
+
+                <!-- Cart Items List -->
+                <div class="cart-items-list" id="cartItemsContainer"></div>
+
+                <!-- Bill Breakdown -->
+                <div class="bill-details" id="billDetailsBox" style="display:none;">
+                    <div class="bill-row">
+                        <span>Item Total</span>
+                        <span id="billSubtotal">₹0</span>
+                    </div>
+                    <div class="bill-row">
+                        <span>Delivery Fee</span>
+                        <span id="billDeliveryFee">₹30</span>
+                    </div>
+                    <div class="bill-row">
+                        <span>Govt Taxes & GST (5%)</span>
+                        <span id="billTax">₹0</span>
+                    </div>
+                    <div class="bill-row bill-total">
+                        <span>To Pay</span>
+                        <span id="billGrandTotal" style="color:#E23744;">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Customer Checkout Form -->
+                <form id="checkoutForm" class="checkout-form-box" style="display:none;">
+                    <div class="form-group">
+                        <label for="custName">Your Name</label>
+                        <input type="text" id="custName" placeholder="e.g. Rahul Sharma" required value="Rahul Sharma">
+                    </div>
+                    <div class="form-group">
+                        <label for="custPhone">Phone Number</label>
+                        <input type="tel" id="custPhone" placeholder="10-digit mobile number" required value="9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="custAddress">Delivery Address</label>
+                        <textarea id="custAddress" rows="2" placeholder="House no, street, landmark, city" required>B-12, Green Park Extension, New Delhi</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="custPayment">Payment Mode</label>
+                        <select id="custPayment">
+                            <option value="Cash on Delivery">Cash on Delivery (COD)</option>
+                            <option value="UPI (Google Pay / PhonePe)">UPI (Google Pay / PhonePe)</option>
+                            <option value="Debit / Credit Card">Debit / Credit Card</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:15px; margin-top:10px;">
+                        Place Food Order
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL 3: ORDER CONFIRMED POPUP -->
+    <!-- ============================================================= -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content" style="max-width: 440px; text-align:center; padding:32px 24px;">
+            <div style="font-size:54px; margin-bottom:12px;">🎉</div>
+            <h2 style="font-size:22px; font-weight:800; color:#1C1C1C; margin-bottom:6px;">Order Confirmed!</h2>
+            <p style="font-size:14px; color:#666; margin-bottom:18px;">
+                Your order has been placed and restaurant is preparing your meal.
+            </p>
+            <div style="background:#F9F9F9; border-radius:10px; padding:14px; margin-bottom:20px; font-size:14px; text-align:left;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="color:#777;">Order Reference:</span>
+                    <strong id="confirmOrderId">#101</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="color:#777;">Total Paid:</span>
+                    <strong id="confirmTotal" style="color:#E23744;">₹0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="color:#777;">Estimated Delivery:</span>
+                    <strong style="color:#24963F;">30-35 mins</strong>
+                </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <a href="/orders" class="btn btn-primary" style="width:100%; justify-content:center; padding:11px; text-decoration:none;">
+                    📦 View in My Orders
+                </a>
+                <button class="btn btn-outline" onclick="closeConfirmModal()" style="width:100%; justify-content:center; padding:10px;">
+                    Continue Browsing
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- FLOATING BOTTOM CART BAR -->
+    <div id="floatingCartBar" class="floating-cart-bar" style="display:none;" onclick="openCartModal()">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">🛒</span>
+            <span id="floatCartText">0 items • ₹0</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.25); padding:6px 14px; border-radius:20px; font-size:13px; font-weight:700;">
+            View Cart ➔
+        </div>
+    </div>
+
+    <!-- 4. FOOTER -->
+    <footer>
+        <p><strong>zomato</strong> &bull; Order food online from restaurants in your city</p>
+        <p style="margin-top:4px; font-size:12px; color:#888;">
+            © 2026 Zomato Clone. All rights reserved.
+        </p>
+    </footer>
+
+    <!-- JavaScript Bundle -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

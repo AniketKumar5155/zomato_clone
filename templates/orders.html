@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Zomato</title>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .orders-page-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .orders-page-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--zomato-border);
+            padding-bottom: 16px;
+        }
+
+        .orders-page-header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--zomato-dark);
+            margin-bottom: 4px;
+        }
+
+        .orders-page-header p {
+            font-size: 14px;
+            color: var(--zomato-gray);
+        }
+
+        .order-history-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 18px;
+            border: 1px solid var(--zomato-border);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .order-history-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .order-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .order-rest-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--zomato-dark);
+        }
+
+        .order-status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-delivered {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .status-placed {
+            background: #FFF3E0;
+            color: #E65100;
+        }
+
+        .status-processing {
+            background: #E3F2FD;
+            color: #1565C0;
+        }
+
+        .order-meta-info {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 12px;
+        }
+
+        .order-items-box {
+            background: #F9F9F9;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            color: #333;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--zomato-red);
+        }
+
+        .order-address-box {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .order-card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dashed var(--zomato-border);
+            padding-top: 12px;
+        }
+
+        .order-payment-type {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .order-total-price {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--zomato-red);
+        }
+
+        .empty-orders-view {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--zomato-border);
+        }
+
+        .empty-orders-view div {
+            font-size: 50px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. NAVBAR -->
+    <header class="navbar">
+        <div class="nav-left">
+            <a href="/" class="logo">zomato</a>
+            <div class="location-badge">
+                📍 <span>Connaught Place, New Delhi</span>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <a href="/" class="btn btn-primary">
+                🍽️ Order Food
+            </a>
+        </div>
+    </header>
+
+    <!-- 2. MAIN ORDERS CONTENT -->
+    <main class="orders-page-container">
+        
+        <div class="orders-page-header">
+            <h1>My Order History</h1>
+            <p>View all your past orders, delivery addresses, and payment details.</p>
+        </div>
+
+        <div id="ordersList">
+            <p style="text-align:center; padding:40px; color:#777;">Loading your order history...</p>
+        </div>
+
+    </main>
+
+    <!-- 3. FOOTER -->
+    <footer>
+        <p><strong>zomato</strong> &bull; Order food online from restaurants in your city</p>
+        <p style="margin-top:4px; font-size:12px; color:#888;">
+            © 2026 Zomato Clone. All rights reserved.
+        </p>
+    </footer>
+
+    <!-- JavaScript to Fetch & Render Orders -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchOrders();
+        });
+
+        async function fetchOrders() {
+            const container = document.getElementById('ordersList');
+            try {
+                const response = await fetch('/api/orders');
+                const orders = await response.json();
+
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-orders-view">
+                            <div>📦</div>
+                            <h3 style="font-size:18px; font-weight:700; margin-bottom:6px;">No orders found</h3>
+                            <p style="color:#777; font-size:14px; margin-bottom:18px;">You haven't placed any food orders yet.</p>
+                            <a href="/" class="btn btn-primary">Explore Restaurants</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => {
+                    let statusClass = 'status-placed';
+                    const statusLower = (o.order_status || '').toLowerCase();
+                    if (statusLower.includes('delivered')) {
+                        statusClass = 'status-delivered';
+                    } else if (statusLower.includes('prepared') || statusLower.includes('progress') || statusLower.includes('out')) {
+                        statusClass = 'status-processing';
+                    }
+
+                    return `
+                        <div class="order-history-card">
+                            <div class="order-card-top">
+                                <h3 class="order-rest-name">${o.restaurant_name || 'Restaurant Order'}</h3>
+                                <span class="order-status-badge ${statusClass}">${o.order_status || 'Order Placed'}</span>
+                            </div>
+                            <div class="order-meta-info">
+                                Order #${o.id} &bull; Placed on ${o.order_date || 'Recent'}
+                            </div>
+
+                            ${o.items_summary ? `
+                                <div class="order-items-box">
+                                    <strong>Items:</strong> ${o.items_summary}
+                                </div>
+                            ` : ''}
+
+                            <div class="order-address-box">
+                                <span>📍</span>
+                                <span>${o.delivery_address || 'Delivery Address'}</span>
+                                ${o.contact_phone ? `&bull; <span>📞 ${o.contact_phone}</span>` : ''}
+                            </div>
+
+                            <div class="order-card-bottom">
+                                <span class="order-payment-type">Paid via <strong>${o.payment_method || 'Cash on Delivery'}</strong></span>
+                                <span class="order-total-price">₹${o.total_amount}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error('Error fetching orders:', err);
+                container.innerHTML = '<p style="color:red; text-align:center; padding:30px;">Failed to load order history. Please try again.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
